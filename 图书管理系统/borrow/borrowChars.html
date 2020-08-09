@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>借阅图表分析</title>
+	</head>
+	<body>
+		<div id="main" style="height:400px"></div>
+	</body>
+	<script type="text/javascript" src="../plugins/echarts/echarts-all.js" ></script>
+	<script type="text/javascript" src="../js/common.js" ></script>
+	<script type="text/javascript" src="../js/jQuery3.5.1.js" ></script>
+	<script>
+    var myChart = echarts.init(document.getElementById('main'));
+
+    $.post(localhost + 'logServlet?action=getLogCountByTime',function (res) {
+		var option = {
+		    title : {
+		        text: '借阅记录分析',
+		        subtext: '按日期计算每天的借阅情况'
+		    },
+		    tooltip : {
+		        trigger: 'axis'
+		    },
+		    legend: {
+		        data:['借书情况','还书情况']
+		    },
+		    toolbox: {
+		        show : true,
+		        feature : {
+		            mark : {show: true},
+		            dataView : {show: true, readOnly: false},
+		            magicType : {show: true, type: ['line', 'bar']},
+		            restore : {show: true},
+		            saveAsImage : {show: true}
+		        }
+		    },
+		    calculable : true,
+		    xAxis : [
+		        {
+		            type : 'category',
+		            boundaryGap : false,
+		            data : res.dateList
+		        }
+		    ],
+		    yAxis : [
+		        {
+		            type : 'value',
+		            axisLabel : {
+		                formatter: '{value} 人'
+		            }
+		        }
+		    ],
+		    series : [
+		        {
+		            name:'借书情况',
+		            type:'line',
+		            data:res.createCountList,
+		            markPoint : {
+		                data : [
+		                    {type : 'max', name: '最大值'},
+		                    {type : 'min', name: '最小值'}
+		                ]
+		            },
+		            markLine : {
+		                data : [
+		                    {type : 'average', name: '平均值'}
+		                ]
+		            }
+		        },
+		        {
+		            name:'还书情况',
+		            type:'line',
+		            data:res.borrowCountList,
+		            markPoint : {
+		                data : [
+		                    {type : 'max', name: '最大值'},
+		                    {type : 'min', name: '最小值'}
+		                ]
+		            },
+		            markLine : {
+		                data : [
+		                    {type : 'average', name : '平均值'}
+		                ]
+		            }
+		        }
+		    ]
+		};
+                    
+        myChart.setOption(option);
+    },"json")
+
+</script>
+</html>

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>借阅记录</title>
+		<meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+        <link rel="stylesheet" href="../plugins/layui/css/layui.css" /> 
+	</head>
+	<body>
+		<div class="layui-fluid">
+		    <div class="layui-card">
+		        <div class="layui-form layui-card-header layuiadmin-card-header-auto" style="height: auto;">
+		            <div class="layui-form-item">
+		               
+		                <div class="layui-inline">
+		                    <label class="layui-form-label">书名</label>
+		                    <div class="layui-input-block">
+		                        <input type="text" id="bookName" placeholder="请输入" autocomplete="off" class="layui-input">
+		                    </div>
+		                </div>
+		                <div class="layui-inline">
+		                    <label class="layui-form-label">用户姓名</label>
+		                    <div class="layui-input-block">
+		                        <input type="text" id="userName" placeholder="请输入" autocomplete="off" class="layui-input">
+		                    </div>
+		                </div>
+		                
+		                 <div class="layui-inline">
+		                    <label class="layui-form-label" style="padding-top: 50px ;">借书时间</label>
+		                    <div class="layui-input-block">
+		                        <input type="text" id="startTime" placeholder="起始时间" autocomplete="off" class="layui-input">
+		                    	<center>到</center>
+		                    	<input type="text" id="endTime" placeholder="截至时间" autocomplete="off" class="layui-input">
+		                    </div>   
+		                </div>
+		                
+		                <div class="layui-inline">
+		                    <label class="layui-form-label">借阅状态</label>
+		                    <form>
+			                    <div class="layui-input-block">
+			                        <select name="bookType" id="bookType">
+			                            <option value="-1">不限</option>
+			                            <option value="0">未还</option>
+			                            <option value="1">已还</option>
+			                        </select>
+			                    </div>
+		                    </form>
+		                </div>
+		                <div class="layui-inline">
+		                    <button class="layui-btn layuiadmin-btn-useradmin" id="searchBtn" lay-submit
+		                            lay-filter="LAY-user-front-search">
+		                        <i class="layui-icon layui-icon-search layuiadmin-button-btn"></i>
+		                    </button>
+		                </div>
+		            </div>
+		        </div>
+		    </div>
+		    <div class="layui-card">
+		        <!--数据表格的载体-->
+		        <table class="layui-hide" id="tableId" lay-filter="table"></table>
+		    </div>
+		
+		</div>
+	</body>
+	<script type="text/javascript" src="../js/common.js" ></script>
+	<script type="text/javascript" src="../js/jQuery3.5.1.js" ></script>
+	<script type="text/javascript" src="../js/requestParam.js" ></script>
+	<script src="../plugins/layui/layui.js"></script>
+	
+	<script type="text/html" id="barDemo">
+	    <a class="layui-btn layui-btn-xs" lay-event="edit">还书</a>
+	</script>
+	
+	<script type="text/javascript">	
+		
+    //一般直接写在一个js文件中
+    layui.use(['layer', 'laypage', 'table', 'jquery','form','laydate'], function () {
+        //单模块加载组件
+        var layer = layui.layer     //弹层
+            , table = layui.table        //表格
+            , form = layui.form
+            , $ = layui.$                //jQuery
+            , laypage = layui.laypage    //分页
+            ,laydate = layui.laydate	//时间
+
+		  //执行一个laydate实例
+		  laydate.render({
+		    elem: '#startTime'  //指定元素
+		    
+		  });	
+		  
+		  laydate.render({
+		    elem: '#endTime'   //指定元素
+		    
+		  });
+
+
+        //监听头工具栏事件
+        table.on('toolbar(table)', function (obj) {
+            var checkStatus = table.checkStatus(obj.config.id)
+                , data = checkStatus.data; //获取选中的数据
+
+            switch (obj.event) {
+                case 'add':
+                    layer.open({
+                        type: 2,
+                        title: ['添加书籍', 'font-size:18px;'],
+                        offset: '10px',
+                        area: ['450px', '300px'],
+                        content: 'addBorrowLog.html' //这里content是一个URL，如果你不想让iframe出现滚动条，你还可以content: ['http://sentsin.com', 'no']
+                    });
+                    break;
+                case 'update':
+                    if (data.length === 0) {
+                        layer.msg('请选择一行');
+                    } else if (data.length > 1) {
+                        layer.msg('只能同时编辑一个');
+                    } else {
+                        // layer.alert('编辑 [id]：'+ checkStatus.data[0].id);
+                        layer.open({
+		                    type: 2,
+		                    title: ['编辑图书', 'font-size:18px;'],
+		                    offset: '10px',
+		                    area: ['600px', '700px'],
+		                    content: 'editBook.html?bookId=' + data[0].id
+		                });
+                    }
+                    break;
+               
+            }
+            ;
+        });
+
+        //监听行工具事件
+        table.on('tool(table)', function (obj) { //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+            var data = obj.data //获得当前行数据
+                , layEvent = obj.event; //获得 lay-event 对应的值
+                
+			 if (layEvent === 'edit') {
+                // layer.msg('编辑操作');
+                
+                if(data.status == 1){
+                	layer.msg('该书已经还过了'); 
+                }else{
+                	layer.confirm('确认还书吗？', function (index) {
+	                    layer.close(index);
+	                    //向服务端发送删除指令
+	                    //异步提交
+	                    $.post(localhost +"logServlet?action=updateLog&logId="+ data.logId, function (res) {
+	                    	
+	                        if (res.code == 0) {
+	                            layer.msg('还书成功', {icon: 1, time: 1000});
+	                        } else {
+	                            layer.msg('还书失败', {icon: 2, time: 1000})
+	                        }
+	                        table.reload('tableId', {
+			                    page: {
+			                        curr: 1 //重新从第 1 页开始
+			                    }
+			                }); //只重载数据
+	                    },"json");
+	                    return false; //阻止表单跳转。如果需要表单跳转，去掉这段即可。
+	                });
+                }
+                
+                
+            }
+        });
+
+
+        //搜索处理
+        $("#searchBtn").click(function () {
+            table.reload('tableId', {
+                where: { //设定异步数据接口的额外参数，任意设
+                    bookName: $('#bookName').val()
+                    , userName: $('#userName').val()
+                    , startTime: $("#startTime").val()
+                    , endTime: $("#endTime").val()
+                    , bookType : $("#bookType option:selected").val()
+                }
+                , page: {
+                    curr: 1 //重新从第 1 页开始
+                }
+            }); //只重载数据
+        });
+
+
+
+        //异步刷新更新用户列表
+        var commonFun = {
+            //自定义函数
+            reloadTable: function () {
+                table.reload('tableId', {
+                    page: {
+                        curr: 1 //重新从第 1 页开始
+                    }
+                }); //只重载数据
+            }
+        }
+
+        //赋给window对象，tools是自定义名称，相当于给浏览器定义了一个全局变量
+        window.tools = commonFun;
+		var userId = '';
+		
+		if(request.QueryString('userId')!="" && request.QueryString('userId')!=null){
+			userId = '&userId='+request.QueryString('userId');
+		}
+		
+
+        //执行一个 table 实例
+        table.render({
+            elem: '#tableId'
+            , toolbar: 'default' //让工具栏左侧显示默认的内置模板
+            , url: localhost +'logServlet?action=getPage' + userId //post方式异步请求  数据接口
+            , title: '图书表'
+            , page: true //开启分页
+            , limit: 10 //每页显示的条数
+            , limits: [2, 4, 6, 8, 10, 20, 50, 100]   //每页条数的选择项
+            , cols: [[ //表头
+                {type: 'numbers', fixed: 'left'}
+                , {type: 'checkbox', fixed: 'left'}
+                , {field: 'logId', title: 'ID',  sort: true}
+                , {field: 'bookId', title: '图书编号',  sort: true}
+                , {field: 'bookName', title: '书名',  sort: true}
+                , {field: 'userId', title: '借阅人Id',  sort: true}
+                , {field: 'userName', title: '借阅人',  sort: true}
+                , {field: 'status', title: '借书状态',  sort: true
+                	,templet: function (d) {              		
+                        var status = d.status;
+                        if(status == 0){
+                        	return "未还";
+                        }else if(status == 1){
+                        	return "已还";
+                        }else{
+                        	return "异常";
+                        }
+
+                        
+                    }
+                }
+                , {field: 'createTime', title: '借书时间',  sort: true
+                	,templet: function (d) {              		
+                        var createTime = d.createTime;
+                        
+                        var date = new Date(createTime).toLocaleString();
+
+                        return date;
+                    }
+				}
+                , {field: 'backTime', title: '还书时间',  sort: true
+                	,templet: function (d) {
+                        var backTime = d.backTime;
+                        if(backTime == null){
+                        	return "-----";
+                      	}
+                        var date = new Date(backTime).toLocaleString();
+                        return date;
+                    }
+				}
+                , {field: 'sumTime', title: '累计时间',  sort: true
+                	,templet: function (d) {
+                		var createTime = new Date(d.createTime).getTime();
+                		var backTime = new Date(d.backTime).getTime();
+                		if(d.backTime == null){
+                        	return "-----";
+                      	}
+                        var sumTime = backTime - createTime;
+                        var date = Math.round(sumTime/1000/60/60/24);
+                        
+                        
+                        return date+'天';
+                    }
+                }
+                , {fixed: 'right',  align: 'center',title: '操作', toolbar: '#barDemo', unresize: true}
+            ]]
+        });
+
+
+        //分页
+        laypage.render({
+            elem: 'pageDemo' //分页容器的id
+            , count: 100 //总条数
+            , skin: '#1E9FFF' //自定义选中色值
+            //,skip: true //开启跳页
+            , jump: function (obj, first) {
+                if (!first) {
+                    layer.msg('第' + obj.curr + '页', {offset: 'b'});
+                }
+            }
+        });
+    });
+
+</script>
+<style>
+	.layui-table-page{
+		text-align: center;
+	} 
+</style>
+</html>

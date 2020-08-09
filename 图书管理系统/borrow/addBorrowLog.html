@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+        <link rel="stylesheet" href="../plugins/layui/css/layui.css">  
+	</head>
+	<body>
+		<form class="layui-form" action="" style="padding-top: 30px">	
+		    <div class="layui-form-item" >
+		        <label class="layui-form-label" >图书Id：</label>
+		        <div class="layui-input-inline">
+		            <input type="text" name="bookId" id="bookId" value="" lay-verify="required"
+		                   autocomplete="off" class="layui-input">
+		            <div id="verify1"></div>       
+		        </div>
+		    </div>
+		    
+		    
+		    <div class="layui-form-item" >
+		        <label class="layui-form-label" >借阅人Id：</label>
+		        <div class="layui-input-inline">
+		            <input type="text" name="userId" id="userId" value="" lay-verify="required"
+		                   autocomplete="off" class="layui-input">
+		            <div id="verify2"></div>        
+		        </div>
+		    </div>
+		    
+		
+		    <div class="layui-form-item">
+		        <div class="layui-input-block">
+		            <button type="submit" class="layui-btn layui-btn-normal" lay-submit lay-filter="editForm">保存</button>
+		            <button type="reset" class="layui-btn llayui-btn-warm">重置</button>
+		        </div>
+		    </div>
+		</form>
+	</body>
+	
+	<script src="../plugins/layui/layui.js"></script>
+	<script type="text/javascript" src="../js/common.js" ></script>
+	<script type="text/javascript" src="../js/jQuery3.5.1.js" ></script>
+	<script type="text/javascript" src="../js/requestParam.js" ></script>
+	<script type="text/javascript">
+	    layui.use(['layer', 'form', 'jquery'], function () {
+	        var layer = layui.layer;
+	        var form = layui.form;
+	        var $ = layui.$;
+
+	
+	        form.on('submit(editForm)', function(data){
+	            //异步提交
+	            $.post(localhost+"logServlet?action=saveLog",$(data.form).serialize(), function (res) {
+	                if(res.code == 0){
+	                    layer.msg('添加成功',{icon:1,time:1000},function(){
+	                        //当你在iframe页面关闭自身时
+	                        var index = parent.layer.getFrameIndex(window.name); //先得到当前iframe层的索引
+	                        parent.layer.close(index); //再执行关闭
+	                        parent.tools.reloadTable();
+	                    });
+	                }
+	                else{
+	                    layer.msg('添加失败',{icon:2,time:1000})
+	                }
+	            },'json');
+	
+	            return false; //阻止表单跳转。如果需要表单跳转，去掉这段即可。
+	        });
+	        
+	        
+	        $('#bookId').on('blur',function(){
+	        	var bookId =  $('#bookId').val();
+	        	var $verify1 = $('#verify1');
+	        	console.log($verify1);
+	        	$.ajax({
+	        		type:"get",
+	        		url:localhost+'bookServlet?action=getBook&bookId=' + bookId ,
+	        		async:true,
+	        		dataType:"json",
+	        		success:function(res){	        			
+	        			if(res.code == 0){
+	        				var $i1= $('<i class="layui-icon layui-icon-face-smile" style="font-size: 20px; color: #5FB878;">'+' 书名：'+res.book.name+'</i>');
+	        				$verify1.html($i1);	
+	        			}else{
+
+	        				var $i2= $('<i class="layui-icon layui-icon-face-cry" style="font-size: 20px; color: #FF5722 ;">'+'没有找到该图书'+'</i>');
+	        				$verify1.html($i2);
+	        			}
+	        		},        		
+	        	});
+	        });
+	        
+	        $('#userId').on('blur',function(){
+	        	var userId =  $('#userId').val();
+	        	var $verify2 = $('#verify2');
+	        	$.ajax({
+	        		type:"get",
+	        		url:localhost+'userServlet?action=getUser&userId=' + userId ,
+	        		async:true,
+	        		dataType:"json",
+	        		success:function(res){
+	        			if(res.code == 0){
+	        				var $i1= $('<i class="layui-icon layui-icon-face-smile" style="font-size: 20px; color: #5FB878;">'+ ' 用户：'+res.user.name+'</i>');
+	        				$verify2.html($i1);	
+	        			}else{
+
+	        				var $i2= $('<i class="layui-icon layui-icon-face-cry" style="font-size: 20px; color: #FF5722 ;">'+'没有找到该用户'+'</i>');
+	        				$verify2.html($i2);
+	        			}
+	        		},  
+	        		
+	        	});
+	        });
+	        
+	        
+	    });
+	</script>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+        <link rel="stylesheet" href="../plugins/layui/css/layui.css">  
+	</head>
+	<body>
+		<form class="layui-form" action="" style="padding-top: 30px">	
+			<div class="layui-form-item" >
+		        <div class="layui-input-inline" id="bookImgDiv">  
+		        	<img id="bookImg" width="150px" height="150px" style="padding-left: 100px;" />
+		        	<button type="button" class="layui-btn uploadBtn" style="margin-left: 100px;" >
+                    	<i class="layui-icon" >&#xe67c;</i>
+                    	<span>上传图片</span>
+               		</button>
+               		<input type="hidden" name="bookImgSrc" id="bookImgSrc" value=""  lay-verify="required"/>
+		        </div>
+		    </div>
+		    <div class="layui-form-item" >
+		        <label class="layui-form-label" >书名：</label>
+		        <div class="layui-input-inline">
+		            <input type="text" name="bookName" id="bookName" value="" lay-verify="required"
+		                   autocomplete="off" class="layui-input">
+		        </div>
+		    </div>
+		    
+		    <div class="layui-form-item" >
+		        <label class="layui-form-label" >作者：</label>
+		        <div class="layui-input-inline">
+		            <input type="text" name="author" id="author" value="" lay-verify="required"
+		                   autocomplete="off" class="layui-input">
+		        </div>
+		    </div>
+		    
+		    <div class="layui-form-item" >
+		        <label class="layui-form-label">库存：</label>
+		        <div class="layui-input-inline">
+		            <input type="text" name="bookNum" id="bookNum" value="" lay-verify="required"
+		                   autocomplete="off" class="layui-input">
+		        </div>
+		    </div>
+		    
+		    <div class="layui-form-item" >
+		        <label class="layui-form-label">单价：</label>
+		        <div class="layui-input-inline">
+		            <input type="text" name="price" id="price" value="" lay-verify="required"
+		                   autocomplete="off" class="layui-input">
+		        </div>
+		    </div>
+		    
+		    <div class="layui-form-item">
+		        <label class="layui-form-label">出版社：</label>
+		        <div class="layui-input-inline">
+		            <input type="text" name="publishing" id="publishing" value="" lay-verify="required"
+		                   autocomplete="off" class="layui-input">
+		        </div>
+		    </div>
+		
+		    <div class="layui-form-item" >
+		        <label class="layui-form-label">类型：</label>
+		        <div class="layui-input-inline">
+		            <select name="bookType" id="bookType"  lay-verify="required">
+		                <option value="0">请选择图书类型</option>
+		            </select>
+		        </div>
+		    </div>
+		    
+		    <div class="layui-form-item">
+		        <label class="layui-form-label">简介：</label>
+		        <div class="layui-input-block">
+		            
+		            <textarea name="sort" id="sort" value="" lay-verify="required"
+		                   autocomplete="off" class="layui-textarea"></textarea>       
+		        </div>
+		    </div>
+
+		
+		    <div class="layui-form-item">
+		        <div class="layui-input-block">
+		            <button type="submit" class="layui-btn layui-btn-normal" lay-submit lay-filter="editForm">保存</button>
+		            <button type="reset" class="layui-btn llayui-btn-warm">重置</button>
+		        </div>
+		    </div>
+		</form>
+	</body>
+	
+	<script src="../plugins/layui/layui.js"></script>
+	<script type="text/javascript" src="../js/common.js" ></script>
+	<script type="text/javascript" src="../js/jQuery3.5.1.js" ></script>
+	<script type="text/javascript" src="../js/requestParam.js" ></script>
+	<script type="text/javascript">
+	    layui.use(['layer', 'form', 'jquery','upload'], function () {
+	        var layer = layui.layer;
+	        var form = layui.form;
+	        var $ = layui.$;
+	        var upload = layui.upload;
+
+	
+	
+	        form.on('submit(editForm)', function(data){
+	            //异步提交
+	            $.post(localhost+"bookServlet?action=saveBook",$(data.form).serialize(), function (res) {
+	                if(res.code == 0){
+	                    layer.msg('更新成功',{icon:1,time:1000},function(){
+	                        //当你在iframe页面关闭自身时
+	                        var index = parent.layer.getFrameIndex(window.name); //先得到当前iframe层的索引
+	                        parent.layer.close(index); //再执行关闭
+	                        parent.tools.reloadTable();
+	                    });
+	                }
+	                else{
+	                    layer.msg('更新失败',{icon:2,time:1000})
+	                }
+	            },'json');
+	
+	            return false; //阻止表单跳转。如果需要表单跳转，去掉这段即可。
+	        });
+	        
+	        
+	        var bookId = request.QueryString("bookId");
+	        
+	        $.post(localhost+"typeServlet?action=getType",
+		        function (data) {
+		            var $bookType = $('#bookType');
+
+		            for(var i = 0;i<data.type.length;i++){
+		            	var $option = $('<option value="'+ data.type[i].type +'">'+ data.type[i].typeName +'</option>'); 
+		            	$bookType.append($option);
+		            } 
+		            form.render(); 
+	        },'json');
+	        
+	        
+	        //执行实例，文件上传（图书图片上传）
+            var uploadInst = upload.render({
+                elem: '.uploadBtn' //绑定上传图片按钮
+                ,url: localhost+'fileServlet?action=addBookImg' //上传图片的接口（后端的控制接口）异步提交
+                ,accept: 'images'  //允许上传的文件类型
+                ,acceptMime: 'image/*'
+                ,xhrFields:{withCredentials:true}
+                ,crossDomain:true
+                ,done: function(res){
+                    //上传完毕回调
+                    if(res.code == 0){
+                        layer.msg("上传成功",{icon:1},function () {
+                        	$bookImgDiv = $('#bookImgDiv');
+                        	console.log($bookImgDiv);
+                        	$img = $('#bookImg');
+                        	$img.attr('src',cosPath + bookImgPath + res.imgPath);
+                        	console.log($img);
+                        	$span = $('#bookImgDiv button span');
+                        	$span.text('更换图片');
+                        	console.log($span);
+                        	$bookImgSrc = $('#bookImgSrc');
+                        	$bookImgSrc.val(bookImgPath + res.imgPath);
+                        
+                        	console.log($bookImgSrc);
+                            
+                        });
+                    }else{
+                        layer.msg("上传失败",{icon:2});
+                    }
+                }
+            });
+	        
+	    });
+	</script>
+</html>
