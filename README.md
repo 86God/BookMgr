@@ -20,4 +20,5 @@ Mysql数据库：bookmgr.sql
 
 
 项目展示：http://129.211.88.104:8082/bookmgr/
+用户名：root  密码：123456
 
